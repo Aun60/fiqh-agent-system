@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fiqh Assistant — Four Schools, One Corpus</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Spectral:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #12302E;
+    --ink-deep: #0C2321;
+    --parchment: #EFE8D8;
+    --parchment-dim: #C9C2AE;
+    --gold: #C9A227;
+    --hanafi: #C9A227;
+    --shafii: #6B8F71;
+    --maliki: #8C4A3D;
+    --hanbali: #4A6B8C;
+    --line: rgba(239, 232, 216, 0.14);
+    --serif: 'Spectral', Georgia, serif;
+    --sans: 'Inter', -apple-system, sans-serif;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html, body {
+    height: 100%;
+    background: var(--ink);
+    color: var(--parchment);
+    font-family: var(--sans);
+    overflow: hidden;
+  }
+
+  #app { height: 100vh; position: relative; }
+
+  /* ---------- LANDING VIEW ---------- */
+  #landing {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 32px;
+    transition: opacity 0.5s ease, transform 0.5s ease;
+  }
+
+  .divider {
+    width: 120px;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--gold), transparent);
+    margin: 28px 0;
+    position: relative;
+  }
+  .divider::before {
+    content: "";
+    position: absolute;
+    left: 50%;
+    top: -3px;
+    transform: translateX(-50%) rotate(45deg);
+    width: 7px;
+    height: 7px;
+    background: var(--gold);
+  }
+
+  .eyebrow {
+    font-family: var(--sans);
+    font-size: 13px;
+    letter-spacing: 0.08em;
+    color: var(--parchment-dim);
+    margin-bottom: 6px;
+  }
+
+  h1 {
+    font-family: var(--serif);
+    font-weight: 600;
+    font-size: clamp(2.2rem, 5vw, 3.4rem);
+    line-height: 1.15;
+    max-width: 720px;
+  }
+
+  .madhab-word { color: var(--gold); font-style: italic; font-weight: 500; }
+
+  .sub {
+    font-family: var(--sans);
+    font-size: 16px;
+    line-height: 1.6;
+    color: var(--parchment-dim);
+    max-width: 480px;
+    margin-top: 18px;
+  }
+
+  .cta {
+    margin-top: 42px;
+    font-family: var(--serif);
+    font-size: 19px;
+    font-weight: 500;
+    letter-spacing: 0.01em;
+    color: var(--ink-deep);
+    background: var(--gold);
+    border: none;
+    padding: 20px 44px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    box-shadow: 0 0 0 rgba(201, 162, 39, 0);
+  }
+  .cta:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(201, 162, 39, 0.25);
+  }
+  .cta:active { transform: translateY(0); }
+
+  .madhab-legend {
+    display: flex;
+    gap: 22px;
+    margin-top: 56px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .madhab-legend span {
+    font-family: var(--sans);
+    font-size: 13px;
+    color: var(--parchment-dim);
+    display: flex;
+    align-items: center;
+    gap: 7px;
+  }
+  .dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+
+  #landing.hidden {
+    opacity: 0;
+    transform: scale(0.98);
+    pointer-events: none;
+    position: absolute;
+    inset: 0;
+  }
+
+  /* ---------- CHAT VIEW ---------- */
+  #chat {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    opacity: 0;
+    transform: translateY(12px);
+    transition: opacity 0.5s ease, transform 0.5s ease;
+  }
+  #chat.visible { opacity: 1; transform: translateY(0); }
+
+  .chat-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 18px 28px;
+    border-bottom: 1px solid var(--line);
+    flex-shrink: 0;
+  }
+  .chat-header .title {
+    font-family: var(--serif);
+    font-size: 19px;
+    font-weight: 600;
+  }
+  .back-btn {
+    background: none;
+    border: none;
+    color: var(--parchment-dim);
+    font-family: var(--sans);
+    font-size: 14px;
+    cursor: pointer;
+    padding: 6px 10px;
+  }
+  .back-btn:hover { color: var(--parchment); }
+
+  .messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 28px 0 140px 0;
+  }
+  .messages-inner {
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 0 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 22px;
+  }
+
+  .msg { display: flex; flex-direction: column; gap: 6px; }
+  .msg.user { align-items: flex-end; }
+  .msg.assistant { align-items: flex-start; }
+
+  .bubble {
+    max-width: 78%;
+    padding: 14px 18px;
+    border-radius: 10px;
+    font-size: 15px;
+    line-height: 1.65;
+    white-space: pre-wrap;
+  }
+  .msg.user .bubble {
+    background: var(--gold);
+    color: var(--ink-deep);
+    border-bottom-right-radius: 2px;
+  }
+  .msg.assistant .bubble {
+    background: rgba(239, 232, 216, 0.06);
+    border: 1px solid var(--line);
+    border-bottom-left-radius: 2px;
+    color: var(--parchment);
+  }
+
+  .tags { display: flex; gap: 6px; flex-wrap: wrap; }
+  .tag {
+    font-family: var(--sans);
+    font-size: 11.5px;
+    font-weight: 600;
+    padding: 3px 9px;
+    border-radius: 20px;
+    color: var(--ink-deep);
+  }
+
+  .typing {
+    font-family: var(--sans);
+    font-size: 14px;
+    color: var(--parchment-dim);
+    font-style: italic;
+  }
+
+  .composer {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 20px 24px 26px;
+    background: linear-gradient(to top, var(--ink) 60%, transparent);
+  }
+  .composer-inner {
+    max-width: 760px;
+    margin: 0 auto;
+    display: flex;
+    gap: 10px;
+    background: var(--ink-deep);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 8px 8px 8px 18px;
+    align-items: flex-end;
+  }
+  textarea#input {
+    flex: 1;
+    background: none;
+    border: none;
+    outline: none;
+    resize: none;
+    color: var(--parchment);
+    font-family: var(--sans);
+    font-size: 15px;
+    line-height: 1.5;
+    padding: 10px 0;
+    max-height: 140px;
+  }
+  textarea#input::placeholder { color: var(--parchment-dim); }
+
+  #send {
+    background: var(--gold);
+    color: var(--ink-deep);
+    border: none;
+    border-radius: 8px;
+    padding: 10px 18px;
+    font-family: var(--sans);
+    font-weight: 600;
+    font-size: 14px;
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+  #send:disabled { opacity: 0.4; cursor: default; }
+
+  .hint {
+    text-align: center;
+    font-size: 12px;
+    color: var(--parchment-dim);
+    margin-top: 10px;
+    font-family: var(--sans);
+  }
+</style>
+</head>
+<body>
+
+<div id="app">
+
+  <div id="landing">
+    <div class="eyebrow">Hanafi · Shafi'i · Maliki · Hanbali</div>
+    <h1>Ask a question, get <span class="madhab-word">four</span> answers — or exactly one.</h1>
+    <div class="divider"></div>
+    <p class="sub">A fiqh assistant grounded in classical texts, always naming the madhab and scholar behind every ruling it gives.</p>
+    <button class="cta" id="startBtn">Let's Query about Fiqh Questions</button>
+    <div class="madhab-legend">
+      <span><i class="dot" style="background:var(--hanafi)"></i>Hanafi</span>
+      <span><i class="dot" style="background:var(--shafii)"></i>Shafi'i</span>
+      <span><i class="dot" style="background:var(--maliki)"></i>Maliki</span>
+      <span><i class="dot" style="background:var(--hanbali)"></i>Hanbali</span>
+    </div>
+  </div>
+
+  <div id="chat">
+    <div class="chat-header">
+      <button class="back-btn" id="backBtn">&larr; Back</button>
+      <div class="title">Fiqh Assistant</div>
+      <div style="width:52px"></div>
+    </div>
+    <div class="messages" id="messages">
+      <div class="messages-inner" id="messagesInner"></div>
+    </div>
+    <div class="composer">
+      <div class="composer-inner">
+        <textarea id="input" rows="1" placeholder="Ask a fiqh question — name a school for a single ruling, or leave it open for all four..."></textarea>
+        <button id="send">Ask</button>
+      </div>
+      <div class="hint">Answers are drawn from classical texts for educational purposes — not a substitute for a qualified scholar.</div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  // ---- CONFIG ----
+  // Point this at your deployed / local FastAPI backend.
+  const API_URL = "http://localhost:8000/query";
+
+  const MADHAB_COLORS = {
+    "Hanafi": "var(--hanafi)",
+    "Shafi'i": "var(--shafii)",
+    "Maliki": "var(--maliki)",
+    "Hanbali": "var(--hanbali)",
+  };
+
+  const landing = document.getElementById("landing");
+  const chat = document.getElementById("chat");
+  const startBtn = document.getElementById("startBtn");
+  const backBtn = document.getElementById("backBtn");
+  const input = document.getElementById("input");
+  const sendBtn = document.getElementById("send");
+  const messagesInner = document.getElementById("messagesInner");
+  const messagesEl = document.getElementById("messages");
+
+  startBtn.addEventListener("click", () => {
+    landing.classList.add("hidden");
+    chat.classList.add("visible");
+    input.focus();
+  });
+
+  backBtn.addEventListener("click", () => {
+    chat.classList.remove("visible");
+    landing.classList.remove("hidden");
+  });
+
+  input.addEventListener("input", () => {
+    input.style.height = "auto";
+    input.style.height = Math.min(input.scrollHeight, 140) + "px";
+  });
+
+  input.addEventListener("keydown", (e) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      sendQuery();
+    }
+  });
+  sendBtn.addEventListener("click", sendQuery);
+
+  function scrollToBottom() {
+    messagesEl.scrollTop = messagesEl.scrollHeight;
+  }
+
+  function addUserMessage(text) {
+    const div = document.createElement("div");
+    div.className = "msg user";
+    div.innerHTML = `<div class="bubble"></div>`;
+    div.querySelector(".bubble").textContent = text;
+    messagesInner.appendChild(div);
+    scrollToBottom();
+  }
+
+  function addTypingIndicator() {
+    const div = document.createElement("div");
+    div.className = "msg assistant";
+    div.id = "typingIndicator";
+    div.innerHTML = `<div class="typing">Consulting the sources...</div>`;
+    messagesInner.appendChild(div);
+    scrollToBottom();
+  }
+
+  function removeTypingIndicator() {
+    const el = document.getElementById("typingIndicator");
+    if (el) el.remove();
+  }
+
+  function addAssistantMessage(answer, scope, madhab, verified) {
+    const div = document.createElement("div");
+    div.className = "msg assistant";
+
+    let tagsHtml = "";
+    if (scope === "single" && madhab) {
+      const color = MADHAB_COLORS[madhab] || "var(--gold)";
+      tagsHtml = `<div class="tags"><span class="tag" style="background:${color}">${madhab}</span></div>`;
+    } else if (scope === "comparative") {
+      tagsHtml = `<div class="tags">${Object.entries(MADHAB_COLORS).map(
+        ([name, color]) => `<span class="tag" style="background:${color}">${name}</span>`
+      ).join("")}</div>`;
+    }
+
+    const warningHtml = !verified
+      ? `<div style="color:var(--maliki); font-size:12px; margin-top:6px;">⚠ Could not fully verify this answer's sourcing.</div>`
+      : "";
+
+    div.innerHTML = `
+      ${tagsHtml}
+      <div class="bubble"></div>
+      ${warningHtml}
+    `;
+    div.querySelector(".bubble").textContent = answer;
+    messagesInner.appendChild(div);
+    scrollToBottom();
+  }
+
+  async function sendQuery() {
+    const text = input.value.trim();
+    if (!text) return;
+
+    addUserMessage(text);
+    input.value = "";
+    input.style.height = "auto";
+    sendBtn.disabled = true;
+    addTypingIndicator();
+
+    try {
+      const res = await fetch(API_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ query: text }),
+      });
+      const data = await res.json();
+      removeTypingIndicator();
+      addAssistantMessage(data.answer, data.scope, data.madhab, data.verified);
+    } catch (err) {
+      removeTypingIndicator();
+      addAssistantMessage(
+        "Couldn't reach the backend. Make sure the API server is running at " + API_URL,
+        null, null, true
+      );
+    } finally {
+      sendBtn.disabled = false;
+    }
+  }
+</script>
+
+</body>
+</html>

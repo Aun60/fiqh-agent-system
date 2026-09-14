@@ -1,0 +1,28 @@
+# Environment / secrets
+.env
+venv/
+env/
+ENV/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+.pytest_cache/
+
+# ChromaDB persisted data — regenerate via ingestion, don't commit binary DB
+chroma_db/
+
+# Your source PDFs — large binary files, and possibly copyrighted/licensed
+# depending on where you got them; don't commit these to a public repo
+data/raw_pdfs/*.pdf
+
+# OS / editor cruft
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Logs
+*.log
