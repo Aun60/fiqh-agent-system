@@ -15,7 +15,10 @@ app = FastAPI(title="Fiqh Multi-Agent RAG API")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # tighten before any real deployment
+    allow_origins=[
+        "fiqh-agent-system.vercel.app",
+        "http://localhost:5500",  # keep for local testing
+    ],
     allow_methods=["*"],
     allow_headers=["*"],
 )
